@@ -9,6 +9,7 @@ from collections import namedtuple
 
 from dagster import check
 from dagster.core.definitions import (
+    AssetKey,
     PartitionSetDefinition,
     PipelineDefinition,
     PresetDefinition,
@@ -17,6 +18,7 @@ from dagster.core.definitions import (
 )
 from dagster.core.definitions.partition import PartitionScheduleDefinition
 from dagster.core.definitions.run_request import RunRequest, SkipReason
+from dagster.core.definitions.sensor import AssetSensorDefinition
 from dagster.core.snap import PipelineSnapshot
 from dagster.serdes import whitelist_for_serdes
 from dagster.utils.error import SerializableErrorInfo
@@ -227,11 +229,19 @@ class ExternalScheduleExecutionErrorData(
 @whitelist_for_serdes
 class ExternalSensorData(
     namedtuple(
-        "_ExternalSensorData", "name pipeline_name solid_selection mode min_interval description"
+        "_ExternalSensorData",
+        "name pipeline_name solid_selection mode min_interval description asset_keys",
     )
 ):
     def __new__(
-        cls, name, pipeline_name, solid_selection, mode, min_interval=None, description=None
+        cls,
+        name,
+        pipeline_name,
+        solid_selection,
+        mode,
+        min_interval=None,
+        description=None,
+        asset_keys=None,
     ):
         return super(ExternalSensorData, cls).__new__(
             cls,
@@ -241,6 +251,7 @@ class ExternalSensorData(
             mode=check.opt_str_param(mode, "mode"),
             min_interval=check.opt_int_param(min_interval, "min_interval"),
             description=check.opt_str_param(description, "description"),
+            asset_keys=check.opt_list_param(asset_keys, "asset_keys", of_type=AssetKey),
         )
 
 
@@ -417,6 +428,11 @@ def external_partition_set_data_from_def(partition_set_def):
 
 
 def external_sensor_data_from_def(sensor_def):
+    if isinstance(sensor_def, AssetSensorDefinition):
+        asset_keys = [sensor_def.asset_key]
+    else:
+        asset_keys = None
+
     return ExternalSensorData(
         name=sensor_def.name,
         pipeline_name=sensor_def.pipeline_name,
@@ -424,6 +440,7 @@ def external_sensor_data_from_def(sensor_def):
         mode=sensor_def.mode,
         min_interval=sensor_def.minimum_interval_seconds,
         description=sensor_def.description,
+        asset_keys=asset_keys,
     )
 
 
