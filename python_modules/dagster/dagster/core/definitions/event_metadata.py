@@ -465,7 +465,7 @@ class EventMetadata:
         return DagsterPipelineRunMetadataEntryData(run_id)
 
     @staticmethod
-    def asset(asset_key) -> "DagsterAssetMetadataEntryData":
+    def asset(asset_key: "AssetKey") -> "DagsterAssetMetadataEntryData":
         from dagster.core.definitions.events import AssetKey
 
         check.inst_param(asset_key, "asset_key", AssetKey)
