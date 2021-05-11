@@ -12,6 +12,7 @@ from .errors import (
 from .inputs import GrapheneSensorSelector
 from .jobs import GrapheneFutureJobTick, GrapheneJobState
 from .util import non_null_list
+from .asset_key import GrapheneAssetKey
 
 
 class GrapheneSensor(graphene.ObjectType):
@@ -25,6 +26,7 @@ class GrapheneSensor(graphene.ObjectType):
     minIntervalSeconds = graphene.NonNull(graphene.Int)
     description = graphene.String()
     nextTick = graphene.Field(GrapheneFutureJobTick)
+    assetKeys = graphene.List(graphene.NonNull(GrapheneAssetKey))
 
     class Meta:
         name = "Sensor"
@@ -60,6 +62,14 @@ class GrapheneSensor(graphene.ObjectType):
 
     def resolve_nextTick(self, graphene_info):
         return get_sensor_next_tick(graphene_info, self._sensor_state)
+
+    def resolve_assetKeys(self, _):
+        if not self._external_sensor.is_asset_sensor:
+            return None
+
+        return [
+            GrapheneAssetKey(path=asset_key.path) for asset_key in self._external_sensor.asset_keys
+        ]
 
 
 class GrapheneSensorOrError(graphene.Union):

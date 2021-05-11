@@ -303,6 +303,7 @@ class GrapheneIPipelineSnapshotMixin:
     schedules = non_null_list(GrapheneSchedule)
     sensors = non_null_list(GrapheneSensor)
     parent_snapshot_id = graphene.String()
+    assetKeys = non_null_list(GrapheneAssetKey)
 
     class Meta:
         name = "IPipelineSnapshotMixin"
@@ -426,6 +427,9 @@ class GrapheneIPipelineSnapshotMixin:
             return lineage_snapshot.parent_snapshot_id
         else:
             return None
+
+    def resolve_assetKeys(self, _graphene_info):
+        return []
 
 
 class GrapheneIPipelineSnapshot(graphene.Interface):

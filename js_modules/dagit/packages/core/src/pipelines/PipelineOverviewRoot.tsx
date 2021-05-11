@@ -5,6 +5,7 @@ import * as React from 'react';
 import {Link, Redirect, RouteComponentProps} from 'react-router-dom';
 
 import {Timestamp} from '../app/time/Timestamp';
+import {AssetKey} from '../assets/types';
 import {PipelineGraph, PIPELINE_GRAPH_SOLID_FRAGMENT} from '../graph/PipelineGraph';
 import {SVGViewport} from '../graph/SVGViewport';
 import {getDagrePipelineLayout} from '../graph/getFullSolidLayout';
@@ -101,6 +102,7 @@ export const PipelineOverviewRoot: React.FC<Props> = (props) => {
         const schedules = pipelineSnapshotOrError.schedules;
         const sensors = pipelineSnapshotOrError.sensors;
 
+        console.log(sensors);
         return (
           <Box flex={{direction: 'row'}} padding={20}>
             <Box style={{flexBasis: '50%'}} margin={{right: 32}}>
@@ -173,6 +175,7 @@ export const PipelineOverviewRoot: React.FC<Props> = (props) => {
                           jobState={sensor.sensorState}
                           jobType={JobType.SENSOR}
                           nextTick={sensor.nextTick || undefined}
+                          assetKeys={sensor.assetKeys || undefined}
                         />
                       ))}
                     </tbody>
@@ -243,6 +246,7 @@ const OverviewJob = ({
   jobState,
   jobType,
   nextTick,
+  assetKeys,
 }: {
   repoAddress: RepoAddress;
   name: string;
@@ -251,6 +255,7 @@ const OverviewJob = ({
   nextTick?: {
     timestamp: number;
   };
+  assetKeys?: AssetKey[];
 }) => {
   const lastRun = jobState.lastRuns.length && jobState.lastRuns[0];
   return (
@@ -264,6 +269,18 @@ const OverviewJob = ({
         >
           {name}
         </Link>
+        {assetKeys ? (
+          <ul>
+            {assetKeys.map((assetKey, idx) => (
+              <Link
+                key={idx}
+                to={`/instance/assets/${assetKey.path.map(encodeURIComponent).join('/')}`}
+              >
+                {assetKey.path.join(' > ')}
+              </Link>
+            ))}
+          </ul>
+        ) : null}
         {lastRun && lastRun.stats.__typename === 'PipelineRunStatsSnapshot' ? (
           <div style={{color: Colors.GRAY3, fontSize: 12, marginTop: 2}}>
             Last Run: <Timestamp timestamp={{unix: lastRun.stats.endTime || 0}} />
@@ -419,6 +436,9 @@ const PIPELINE_OVERVIEW_QUERY = gql`
           }
           nextTick {
             timestamp
+          }
+          assetKeys {
+            path
           }
         }
       }

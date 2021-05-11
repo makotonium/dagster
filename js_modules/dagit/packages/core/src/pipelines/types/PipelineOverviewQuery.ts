@@ -400,12 +400,18 @@ export interface PipelineOverviewQuery_pipelineSnapshotOrError_PipelineSnapshot_
   timestamp: number;
 }
 
+export interface PipelineOverviewQuery_pipelineSnapshotOrError_PipelineSnapshot_sensors_assetKeys {
+  __typename: "AssetKey";
+  path: string[];
+}
+
 export interface PipelineOverviewQuery_pipelineSnapshotOrError_PipelineSnapshot_sensors {
   __typename: "Sensor";
   id: string;
   name: string;
   sensorState: PipelineOverviewQuery_pipelineSnapshotOrError_PipelineSnapshot_sensors_sensorState;
   nextTick: PipelineOverviewQuery_pipelineSnapshotOrError_PipelineSnapshot_sensors_nextTick | null;
+  assetKeys: PipelineOverviewQuery_pipelineSnapshotOrError_PipelineSnapshot_sensors_assetKeys[] | null;
 }
 
 export interface PipelineOverviewQuery_pipelineSnapshotOrError_PipelineSnapshot {
