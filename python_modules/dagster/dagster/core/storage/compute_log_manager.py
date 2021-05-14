@@ -60,6 +60,9 @@ class ComputeLogManager(ABC):
     def use_legacy_api(self) -> bool:
         return True
 
+    def should_capture_run_by_step(self) -> bool:
+        return True
+
     @contextmanager
     def watch(self, pipeline_run, step_key=None):
         """
