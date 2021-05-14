@@ -49,7 +49,14 @@ def _build_cursor(out_cursor: int, err_cursor: int) -> str:
 class LocalComputeLogManager(ComputeLogManager, ConfigurableClass):
     """Stores copies of stdout & stderr for each compute step locally on disk."""
 
-    def __init__(self, base_dir, polling_timeout=None, use_legacy_api=True, inst_data=None):
+    def __init__(
+        self,
+        base_dir,
+        polling_timeout=None,
+        use_legacy_api=True,
+        capture_runs_by_step=True,
+        inst_data=None,
+    ):
         self._base_dir = base_dir
         self._polling_timeout = check.opt_float_param(
             polling_timeout, "polling_timeout", DEFAULT_WATCHDOG_POLLING_TIMEOUT
@@ -61,6 +68,7 @@ class LocalComputeLogManager(ComputeLogManager, ConfigurableClass):
         # constructing manually, so as to not break user-provided compute log managers that might
         # proxy this local compute log manager
         self._use_legacy_api = check.bool_param(use_legacy_api, "use_legacy_api")
+        self._capture_runs_by_step = check.bool_param(capture_runs_by_step, "capture_runs_by_step")
 
         self._inst_data = check.opt_inst_param(inst_data, "inst_data", ConfigurableClassData)
 
@@ -78,6 +86,7 @@ class LocalComputeLogManager(ComputeLogManager, ConfigurableClass):
             "base_dir": StringSource,
             "polling_timeout": Field(Float, is_required=False),
             "use_legacy_api": Field(Bool, is_required=False, default_value=False),
+            "capture_runs_by_step": Field(Bool, is_required=False, default_value=False),
         }
 
     @staticmethod
@@ -86,6 +95,9 @@ class LocalComputeLogManager(ComputeLogManager, ConfigurableClass):
 
     def use_legacy_api(self) -> bool:
         return self._use_legacy_api
+
+    def should_capture_run_by_step(self) -> bool:
+        return self._capture_runs_by_step
 
     @contextmanager
     def capture_logs(self, namespace: str, log_key: str):
