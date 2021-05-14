@@ -1,6 +1,7 @@
 import sys
 from typing import Iterator, List, cast
 
+from contextlib import ExitStack
 from dagster import check
 from dagster.core.definitions import Failure, HookExecutionResult, RetryRequested
 from dagster.core.errors import (
@@ -32,7 +33,6 @@ def inner_plan_execution_iterator(
     check.inst_param(execution_plan, "execution_plan", ExecutionPlan)
 
     with execution_plan.start(retry_mode=pipeline_context.retry_mode) as active_execution:
-
         # It would be good to implement a reference tracking algorithm here to
         # garbage collect results that are no longer needed by any steps
         # https://github.com/dagster-io/dagster/issues/811
@@ -55,9 +55,19 @@ def inner_plan_execution_iterator(
             )
 
             # capture all of the logs for this step
-            with pipeline_context.instance.compute_log_manager.watch(
-                step_context.pipeline_run, step_context.step.key
-            ):
+            with ExitStack() as stack:
+                if pipeline_context.instance.compute_log_manager.use_legacy_api():
+                    stack.enter_context(
+                        pipeline_context.instance.compute_log_manager.watch(
+                            step_context.pipeline_run, step_context.step.key
+                        )
+                    )
+                else:
+                    stack.enter_context(
+                        pipeline_context.instance.compute_log_manager.capture_logs(
+                            step_context.pipeline_run.run_id, step_context.step.key
+                        )
+                    )
                 yield DagsterEvent.capture_logs(
                     step_context, step_context.step.key, [step_context.step]
                 )
