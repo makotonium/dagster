@@ -384,3 +384,42 @@ def ge_validation_op_factory_v3(
         runtime_method_type,
         extra_kwargs,
     )
+
+
+def ge_checkpoint_solid_factory(
+    name,
+    datasource_name,
+    checkpoint_name
+):
+    """
+        Generates solids for running a checkpoint with GE
+    """
+
+    check.str_param(checkpoint_name, "checkpoint_name")
+
+    @solid(
+        name=name,
+        tags={"kind": "ge"}
+    )
+    def ge_checkpoint_solid(context):
+        data_context = context.resources.ge_data_context
+        data_context.get_checkpoint(checkpoint_name)
+        results = checkpoint.run()
+
+        errors = 0
+
+        for result in results["run_results"].items():
+            validation_result = result[1]["validation_result"]
+
+            if validation_result["sucess"]:
+                context.log.info(f"{validation_result['meta']['expectation_suite_name']}: PASS")
+            else:
+                context.log.error(f"{validation_result['meta']['expectation_suite_name']}: FAIL")
+                errors += 1
+
+            yield ExpectationResult(
+            success = (errors == 0)
+        ),
+        yield Output(results)
+
+    return ge_checkpoint_solid
