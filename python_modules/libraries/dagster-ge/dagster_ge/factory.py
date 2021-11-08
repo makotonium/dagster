@@ -386,13 +386,42 @@ def ge_validation_op_factory_v3(
     )
 
 
+def core_ge_checkpoint_factory(
+    dagster_decorator,
+    decorator_name,
+    name,
+    datasource_name,
+    checkpoint_name
+):
+    check.str_param(datasource_name, "datasource_name")
+    check.str_param(checkpoint_name, "checkpoint_name")
+
+    @dagster_decorator(
+        name=name,
+        required_resource_keys={"ge_data_context"},
+        tags={"kind": "ge"}
+    )
+    def _ge_checkpoint_fn(context):
+        data_context = context.resources.ge_data_context
+        data_context.get_checkpoint(checkpoint_name)
+        results = checkpoint.run()
+
+        erros = 0
+
+
+    return _ge_checkpoint_fn
+
 def ge_checkpoint_solid_factory(
     name,
     datasource_name,
     checkpoint_name
 ):
-    """
-        Generates solids for running a checkpoint with GE
+    """Generates solids for running a checkpoint with GE
+
+    Args:
+        name (str): The name the solid
+        datasource_name (str): The name of your DataSource, see your great_expectations.yml
+        checkpoint_name (str): The name of your expectation checkpoint.
     """
 
     check.str_param(checkpoint_name, "checkpoint_name")
@@ -403,11 +432,12 @@ def ge_checkpoint_solid_factory(
     )
     def ge_checkpoint_solid(context):
         data_context = context.resources.ge_data_context
-        data_context.get_checkpoint(checkpoint_name)
+        checkpont = data_context.get_checkpoint(checkpoint_name)
         results = checkpoint.run()
 
         errors = 0
 
+        #TODO -- figure out a way to display
         for result in results["run_results"].items():
             validation_result = result[1]["validation_result"]
 
@@ -423,3 +453,5 @@ def ge_checkpoint_solid_factory(
         yield Output(results)
 
     return ge_checkpoint_solid
+
+# TODO -- v3 and op support
