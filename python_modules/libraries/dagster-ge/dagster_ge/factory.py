@@ -408,8 +408,23 @@ def core_ge_checkpoint_factory(
 
         erros = 0
 
+        #TODO -- figure out a way to display
+        for result in results["run_results"].items():
+            validation_result = result[1]["validation_result"]
+
+            if validation_result["sucess"]:
+                context.log.info(f"{validation_result['meta']['expectation_suite_name']}: PASS")
+            else:
+                context.log.error(f"{validation_result['meta']['expectation_suite_name']}: FAIL")
+                errors += 1
+
+            yield ExpectationResult(
+                success = (errors == 0)
+            ),
+        yield Output(results)
 
     return _ge_checkpoint_fn
+
 
 def ge_checkpoint_solid_factory(
     name,
@@ -422,36 +437,42 @@ def ge_checkpoint_solid_factory(
         name (str): The name the solid
         datasource_name (str): The name of your DataSource, see your great_expectations.yml
         checkpoint_name (str): The name of your expectation checkpoint.
+    Returns:
+        TODO
     """
 
-    check.str_param(checkpoint_name, "checkpoint_name")
-
-    @solid(
-        name=name,
-        tags={"kind": "ge"}
+    return core_ge_checkpoint_factory(
+        solid,
+        "solid",
+        name,
+        datasource_name,
+        checkpoint_name
     )
-    def ge_checkpoint_solid(context):
-        data_context = context.resources.ge_data_context
-        checkpont = data_context.get_checkpoint(checkpoint_name)
-        results = checkpoint.run()
 
-        errors = 0
 
-        #TODO -- figure out a way to display
-        for result in results["run_results"].items():
-            validation_result = result[1]["validation_result"]
+def ge_checkpoint_op_factory(
+        name,
+        datasource_name,
+        checkpoint_name
+):
+    """Generates ops for running a checkpoint with GE
 
-            if validation_result["sucess"]:
-                context.log.info(f"{validation_result['meta']['expectation_suite_name']}: PASS")
-            else:
-                context.log.error(f"{validation_result['meta']['expectation_suite_name']}: FAIL")
-                errors += 1
+    Args:
+                name (str): The name the solid
+        datasource_name (str): The name of your DataSource, see your great_expectations.yml
+        checkpoint_name (str): The name of your expectation checkpoint.
+    Returns:
+        TODO
+    """
 
-            yield ExpectationResult(
-            success = (errors == 0)
-        ),
-        yield Output(results)
+    return core_ge_checkpoint_factory(
+        solid,
+        "solid",
+        name,
+        datasource_name,
+        checkpoint_name
+    )
 
-    return ge_checkpoint_solid
 
-# TODO -- v3 and op support
+
+#V3?
