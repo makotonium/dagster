@@ -403,12 +403,11 @@ def core_ge_checkpoint_factory(
     )
     def _ge_checkpoint_fn(context):
         data_context = context.resources.ge_data_context
-        data_context.get_checkpoint(checkpoint_name)
+        checkpoint = data_context.get_checkpoint(checkpoint_name)
         results = checkpoint.run()
 
         erros = 0
 
-        #TODO -- figure out a way to display
         for result in results["run_results"].items():
             validation_result = result[1]["validation_result"]
 
@@ -438,7 +437,8 @@ def ge_checkpoint_solid_factory(
         datasource_name (str): The name of your DataSource, see your great_expectations.yml
         checkpoint_name (str): The name of your expectation checkpoint.
     Returns:
-        TODO
+        A solid that runs great_expectation checkpoint with given name and datasource. Yields
+        ExpectationResult and results.
     """
 
     return core_ge_checkpoint_factory(
@@ -462,17 +462,14 @@ def ge_checkpoint_op_factory(
         datasource_name (str): The name of your DataSource, see your great_expectations.yml
         checkpoint_name (str): The name of your expectation checkpoint.
     Returns:
-        TODO
+        An op that runs great_expectation checkpoint with given name and datasource. Yields
+        ExpectationResult and results.
     """
 
     return core_ge_checkpoint_factory(
-        solid,
-        "solid",
+        op,
+        "op",
         name,
         datasource_name,
         checkpoint_name
     )
-
-
-
-#V3?
