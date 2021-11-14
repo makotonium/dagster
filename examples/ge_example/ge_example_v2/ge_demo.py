@@ -17,8 +17,8 @@ def process_payroll(df):
 
 # start_ge_demo_marker_op
 @op
-def postprocess_payroll(numrows, expectation, checkpoint_errors):
-    if expectation["success"] & checkpoint_errors == 0:
+def postprocess_payroll(numrows, expectation, checkpoint_success):
+    if expectation["success"] & checkpoint_success:
         return numrows
     else:
         raise ValueError
@@ -59,8 +59,8 @@ payroll_checkpoint = ge_checkpoint_op_factory(
 def payroll_data():
     output_df = read_in_datafile()
     expectation = payroll_expectations(output_df)
-    checkpoint_errors = payroll_checkpoint()
-    postprocess_payroll(process_payroll(output_df), expectation, checkpoint_errors)
+    checkpoint_outputs = payroll_checkpoint()
+    postprocess_payroll(process_payroll(output_df), expectation, checkpoint_outputs.result)
 
 
 # end_ge_demo_marker_job
