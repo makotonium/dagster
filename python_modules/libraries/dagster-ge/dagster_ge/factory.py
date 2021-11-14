@@ -398,6 +398,22 @@ def core_ge_checkpoint_factory(
 
     @dagster_decorator(
         name=name,
+        output_defs=[
+            OutputDefinition(
+                name="checkpoint_run_metadata",
+                dagster_type=dict,
+                description=f"""
+                This {decorator_name} yields an ExpectationResult with a structured dict of 
+                metadata from the GE checkpint as well as the full result.
+                """,
+            ),
+            OutputDefinition(
+                dagster_type=bool,
+                description=f"""This {decorator_name} yields a boolean on checkoint run was 
+                successful or not.
+                """
+            )
+        ],
         required_resource_keys={"ge_data_context"},
         tags={"kind": "ge"},
     )
@@ -406,8 +422,6 @@ def core_ge_checkpoint_factory(
         checkpoint = data_context.get_checkpoint(checkpoint_name)
         results = checkpoint.run()
 
-        errors = 0
-
         for result in results["run_results"].items():
             validation_result = result[1]["validation_result"]
 
@@ -415,15 +429,15 @@ def core_ge_checkpoint_factory(
                 context.log.info(f"{validation_result['meta']['expectation_suite_name']}: PASS")
             else:
                 context.log.error(f"{validation_result['meta']['expectation_suite_name']}: FAIL")
-                errors += 1
 
         meta_stats= EventMetadataEntry.md(md_str=str(results), label="Checkpoint Results")
         yield ExpectationResult(
-            success = (errors == 0),
+            success = results.success,
             description="Ensure there are no errors.",
             metadata_entries=[meta_stats]
         )
-        yield Output(errors)
+        yield Output(results.run_results, output_name="checkpoint_run_metadata")
+        yield Output(results.success)
 
     return _ge_checkpoint_fn
 
