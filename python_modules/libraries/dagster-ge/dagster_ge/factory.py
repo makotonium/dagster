@@ -406,21 +406,22 @@ def core_ge_checkpoint_factory(
         checkpoint = data_context.get_checkpoint(checkpoint_name)
         results = checkpoint.run()
 
-        erros = 0
+        errors = 0
 
         for result in results["run_results"].items():
             validation_result = result[1]["validation_result"]
 
-            if validation_result["sucess"]:
+            if validation_result["success"]:
                 context.log.info(f"{validation_result['meta']['expectation_suite_name']}: PASS")
             else:
                 context.log.error(f"{validation_result['meta']['expectation_suite_name']}: FAIL")
                 errors += 1
 
-            yield ExpectationResult(
-                success = (errors == 0)
-            ),
         yield Output(results)
+        yield ExpectationResult(
+            success = (errors == 0)
+        )
+        yield Output(errors)
 
     return _ge_checkpoint_fn
 
