@@ -417,9 +417,11 @@ def core_ge_checkpoint_factory(
                 context.log.error(f"{validation_result['meta']['expectation_suite_name']}: FAIL")
                 errors += 1
 
+        meta_stats= EventMetadataEntry.md(md_str=str(results), label="Checkpoint Results")
         yield ExpectationResult(
             success = (errors == 0),
-            description="Ensure there are no errors."
+            description="Ensure there are no errors.",
+            metadata_entries=[meta_stats]
         )
         yield Output(errors)
 
