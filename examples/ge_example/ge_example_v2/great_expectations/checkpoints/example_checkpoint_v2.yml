@@ -5,7 +5,7 @@ class_name: LegacyCheckpoint
 validation_operator_name:
 batches:
   - batch_kwargs:
-      path: basic.csv
+      path: ./data/succeed.csv
       datasource: getest
       reader_method: read_csv
       data_asset_name: basic

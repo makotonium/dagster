@@ -1,7 +1,7 @@
 # pylint: disable=no-value-for-parameter
 from dagster import job, op
 from dagster.utils import file_relative_path
-from dagster_ge.factory import ge_data_context, ge_validation_op_factory
+from dagster_ge.factory import ge_data_context, ge_validation_op_factory, ge_checkpoint_op_factory
 from pandas import read_csv
 
 
@@ -17,8 +17,8 @@ def process_payroll(df):
 
 # start_ge_demo_marker_op
 @op
-def postprocess_payroll(numrows, expectation):
-    if expectation["success"]:
+def postprocess_payroll(numrows, expectation, checkpoint_errors):
+    if expectation["success"] & checkpoint_errors == 0:
         return numrows
     else:
         raise ValueError
@@ -30,6 +30,10 @@ def postprocess_payroll(numrows, expectation):
 # start_ge_demo_marker_factory
 payroll_expectations = ge_validation_op_factory(
     name="ge_validation_op", datasource_name="getest", suite_name="basic.warning"
+)
+
+payroll_checkpoint = ge_checkpoint_op_factory(
+    name="ge_checkpoint_op", datasource_name="getest", checkpoint_name="example_checkpoint_v2"
 )
 # end_ge_demo_marker_factory
 
@@ -54,8 +58,9 @@ payroll_expectations = ge_validation_op_factory(
 )
 def payroll_data():
     output_df = read_in_datafile()
-
-    postprocess_payroll(process_payroll(output_df), payroll_expectations(output_df))
+    expectation = payroll_expectations(output_df)
+    checkpoint_errors = payroll_checkpoint()
+    postprocess_payroll(process_payroll(output_df), expectation, checkpoint_errors)
 
 
 # end_ge_demo_marker_job
