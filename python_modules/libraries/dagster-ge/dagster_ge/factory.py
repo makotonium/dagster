@@ -399,7 +399,7 @@ def core_ge_checkpoint_factory(
     @dagster_decorator(
         name=name,
         required_resource_keys={"ge_data_context"},
-        tags={"kind": "ge"}
+        tags={"kind": "ge"},
     )
     def _ge_checkpoint_fn(context):
         data_context = context.resources.ge_data_context
@@ -417,9 +417,9 @@ def core_ge_checkpoint_factory(
                 context.log.error(f"{validation_result['meta']['expectation_suite_name']}: FAIL")
                 errors += 1
 
-        yield Output(results)
         yield ExpectationResult(
-            success = (errors == 0)
+            success = (errors == 0),
+            description="Ensure there are no errors."
         )
         yield Output(errors)
 
